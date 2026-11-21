@@ -1,0 +1,875 @@
+{
+  "captures": {
+    "lapack_wifi_01": {
+      "path": "/home/allairemederic/Documents/projects/gogo-packet/data/raw/lapack_wifi_01.pcap",
+      "counts": {
+        "total": 1815,
+        "retained": 1813,
+        "non_ip": 2
+      },
+      "quic": {
+        "status": "checked",
+        "recognized_retained_packets": 66
+      },
+      "protocol_counts": {
+        "TCP": 1695,
+        "UDP": 110,
+        "OTHER": 8
+      },
+      "retained_after_cleaning": 1813
+    },
+    "lapack_wifi_02": {
+      "path": "/home/allairemederic/Documents/projects/gogo-packet/data/raw/lapack_wifi_02.pcap",
+      "counts": {
+        "total": 2645,
+        "retained": 2645
+      },
+      "quic": {
+        "status": "checked",
+        "recognized_retained_packets": 31
+      },
+      "protocol_counts": {
+        "TCP": 2574,
+        "UDP": 53,
+        "OTHER": 18
+      },
+      "retained_after_cleaning": 2645
+    },
+    "lapack_wifi_03": {
+      "path": "/home/allairemederic/Documents/projects/gogo-packet/data/raw/lapack_wifi_03.pcap",
+      "counts": {
+        "total": 2008,
+        "retained": 2008
+      },
+      "quic": {
+        "status": "checked",
+        "recognized_retained_packets": 34
+      },
+      "protocol_counts": {
+        "TCP": 1949,
+        "UDP": 54,
+        "OTHER": 5
+      },
+      "retained_after_cleaning": 2008
+    },
+    "youtube_wifi_01": {
+      "path": "/home/allairemederic/Documents/projects/gogo-packet/data/raw/youtube_wifi_01.pcap",
+      "counts": {
+        "total": 19910,
+        "non_ip": 4,
+        "retained": 19906
+      },
+      "quic": {
+        "status": "checked",
+        "recognized_retained_packets": 191
+      },
+      "protocol_counts": {
+        "UDP": 19773,
+        "OTHER": 73,
+        "TCP": 60
+      },
+      "retained_after_cleaning": 19906
+    },
+    "youtube_wifi_02": {
+      "path": "/home/allairemederic/Documents/projects/gogo-packet/data/raw/youtube_wifi_02.pcap",
+      "counts": {
+        "total": 13618,
+        "retained": 13612,
+        "non_ip": 6
+      },
+      "quic": {
+        "status": "checked",
+        "recognized_retained_packets": 70
+      },
+      "protocol_counts": {
+        "UDP": 13158,
+        "TCP": 381,
+        "OTHER": 73
+      },
+      "retained_after_cleaning": 13612
+    },
+    "youtube_wifi_03": {
+      "path": "/home/allairemederic/Documents/projects/gogo-packet/data/raw/youtube_wifi_03.pcap",
+      "counts": {
+        "total": 28422,
+        "retained": 28418,
+        "non_ip": 4
+      },
+      "quic": {
+        "status": "checked",
+        "recognized_retained_packets": 25623
+      },
+      "protocol_counts": {
+        "UDP": 27988,
+        "TCP": 353,
+        "OTHER": 77
+      },
+      "retained_after_cleaning": 28418
+    }
+  },
+  "cleaned_packet_count": 68402,
+  "analysis_scope": {
+    "sizes": "Tous les paquets IP conservés, offloading inchangé.",
+    "tcp_arrivals": "TCP avec payload, deux directions confondues, par capture.",
+    "udp_arrivals": "Tous les UDP observés, données et contrôle non séparés.",
+    "udp_classification": "Non effectuée : aucune étiquette fiable données/contrôle.",
+    "application_filter": "Aucun : le trafic de fond peut être présent.",
+    "quic": "Reconnaissance par TShark seulement; aucune étiquette données/contrôle QUIC."
+  },
+  "statistics": [
+    {
+      "capture_id": "lapack_wifi_01",
+      "variable": "ip_length_bytes",
+      "n": 1813,
+      "min": 52.0,
+      "max": 28532.0,
+      "median": 2789.0,
+      "mean": 4620.621070049641,
+      "second_raw_moment": 54729009.15609487,
+      "variance": 33397291.09308782
+    },
+    {
+      "capture_id": "lapack_wifi_01",
+      "variable": "tcp_data_interarrival_seconds",
+      "n": 1126,
+      "min": 0.0,
+      "max": 1.12202787399292,
+      "median": 2.09808349609375e-05,
+      "mean": 0.0028034253823397215,
+      "second_raw_moment": 0.0012601795802789921,
+      "variance": 0.0012534335600814497
+    },
+    {
+      "capture_id": "lapack_wifi_01",
+      "variable": "udp_observed_interarrival_seconds",
+      "n": 109,
+      "min": 0.0,
+      "max": 1.0930368900299072,
+      "median": 0.00030994415283203125,
+      "mean": 0.018756321810801096,
+      "second_raw_moment": 0.012246718729927747,
+      "variance": 0.01200505726207647
+    },
+    {
+      "capture_id": "lapack_wifi_02",
+      "variable": "ip_length_bytes",
+      "n": 2645,
+      "min": 52.0,
+      "max": 10020.0,
+      "median": 2900.0,
+      "mean": 3170.1209829867676,
+      "second_raw_moment": 15301192.933081286,
+      "variance": 5253512.091257731
+    },
+    {
+      "capture_id": "lapack_wifi_02",
+      "variable": "tcp_data_interarrival_seconds",
+      "n": 1923,
+      "min": 0.0,
+      "max": 0.09468317031860352,
+      "median": 0.0,
+      "mean": 0.0012245610922001578,
+      "second_raw_moment": 3.743419749961921e-05,
+      "variance": 3.595334411788955e-05
+    },
+    {
+      "capture_id": "lapack_wifi_02",
+      "variable": "udp_observed_interarrival_seconds",
+      "n": 52,
+      "min": 0.0,
+      "max": 2.182961940765381,
+      "median": 0.0005015134811401367,
+      "mean": 0.06029425217555119,
+      "second_raw_moment": 0.09442072556202036,
+      "variance": 0.09256543320125084
+    },
+    {
+      "capture_id": "lapack_wifi_03",
+      "variable": "ip_length_bytes",
+      "n": 2008,
+      "min": 52.0,
+      "max": 16709.0,
+      "median": 5748.0,
+      "mean": 4159.5552788844625,
+      "second_raw_moment": 26213133.929780878,
+      "variance": 8915673.888322892
+    },
+    {
+      "capture_id": "lapack_wifi_03",
+      "variable": "tcp_data_interarrival_seconds",
+      "n": 1438,
+      "min": 0.0,
+      "max": 0.11175012588500977,
+      "median": 1.3113021850585938e-05,
+      "mean": 0.001138669724922021,
+      "second_raw_moment": 2.9543813350619025e-05,
+      "variance": 2.8266901702533973e-05
+    },
+    {
+      "capture_id": "lapack_wifi_03",
+      "variable": "udp_observed_interarrival_seconds",
+      "n": 53,
+      "min": 0.0,
+      "max": 1.5467000007629395,
+      "median": 0.0012280941009521484,
+      "mean": 0.04295782772999889,
+      "second_raw_moment": 0.04681526582904759,
+      "variance": 0.04583469645933979
+    },
+    {
+      "capture_id": "youtube_wifi_01",
+      "variable": "ip_length_bytes",
+      "n": 19906,
+      "min": 64.0,
+      "max": 1278.0,
+      "median": 1278.0,
+      "mean": 1117.617853913393,
+      "second_raw_moment": 1413736.0541042902,
+      "variance": 164674.6593325656
+    },
+    {
+      "capture_id": "youtube_wifi_01",
+      "variable": "tcp_data_interarrival_seconds",
+      "n": 4,
+      "min": 0.0021398067474365234,
+      "max": 0.07782196998596191,
+      "median": 0.01649308204650879,
+      "mean": 0.028236985206604004,
+      "second_raw_moment": 0.0017098536398520991,
+      "variance": 0.001216701741725501
+    },
+    {
+      "capture_id": "youtube_wifi_01",
+      "variable": "udp_observed_interarrival_seconds",
+      "n": 19772,
+      "min": 0.0,
+      "max": 6.282715082168579,
+      "median": 0.0,
+      "mean": 0.004627513205404588,
+      "second_raw_moment": 0.013742064037393751,
+      "variance": 0.013721344137490045
+    },
+    {
+      "capture_id": "youtube_wifi_02",
+      "variable": "ip_length_bytes",
+      "n": 13612,
+      "min": 40.0,
+      "max": 2868.0,
+      "median": 1278.0,
+      "mean": 1046.4969879518073,
+      "second_raw_moment": 1318556.741771966,
+      "variance": 223417.2092334513
+    },
+    {
+      "capture_id": "youtube_wifi_02",
+      "variable": "tcp_data_interarrival_seconds",
+      "n": 101,
+      "min": 0.0,
+      "max": 12.902113914489746,
+      "median": 0.0006568431854248047,
+      "mean": 0.4978321684469091,
+      "second_raw_moment": 3.9017458711138477,
+      "variance": 3.6904480932050285
+    },
+    {
+      "capture_id": "youtube_wifi_02",
+      "variable": "udp_observed_interarrival_seconds",
+      "n": 13157,
+      "min": 0.0,
+      "max": 6.503766059875488,
+      "median": 0.0,
+      "mean": 0.006950336250298797,
+      "second_raw_moment": 0.020531279570252626,
+      "variance": 0.020484529326360454
+    },
+    {
+      "capture_id": "youtube_wifi_03",
+      "variable": "ip_length_bytes",
+      "n": 28418,
+      "min": 32.0,
+      "max": 7212.0,
+      "median": 1278.0,
+      "mean": 1117.8018509395454,
+      "second_raw_moment": 1416117.353191639,
+      "variance": 166642.23919564488
+    },
+    {
+      "capture_id": "youtube_wifi_03",
+      "variable": "tcp_data_interarrival_seconds",
+      "n": 97,
+      "min": 0.0,
+      "max": 23.6226909160614,
+      "median": 0.0003509521484375,
+      "mean": 0.2827314740603732,
+      "second_raw_moment": 5.834884714328335,
+      "variance": 5.8148949990279855
+    },
+    {
+      "capture_id": "youtube_wifi_03",
+      "variable": "udp_observed_interarrival_seconds",
+      "n": 27987,
+      "min": 0.0,
+      "max": 5.310365200042725,
+      "median": 0.0,
+      "mean": 0.003287161789842752,
+      "second_raw_moment": 0.007211025653317037,
+      "variance": 0.007200477500046282
+    }
+  ],
+  "distribution_fits": {
+    "lapack_wifi_01": {
+      "ip_length_bytes": [
+        {
+          "distribution": "poisson",
+          "n_total": 1813,
+          "sampled": false,
+          "n_test": 1813,
+          "parameters": {
+            "mu": 4620.621070049641
+          },
+          "data_type": "discrete",
+          "ks": 0.6651904366021852,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "geom",
+          "n_total": 1813,
+          "sampled": false,
+          "n_test": 1813,
+          "parameters": {
+            "p": 0.00021642112279708246
+          },
+          "data_type": "discrete",
+          "ks": 0.33818192921444656,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ],
+      "tcp_data_interarrival_seconds": [
+        {
+          "distribution": "norm",
+          "n_total": 1126,
+          "sampled": false,
+          "n_test": 1126,
+          "parameters": {
+            "loc": 0.0028034253823397215,
+            "scale": 0.03540386363211577
+          },
+          "data_type": "continuous",
+          "ks": 0.4684430697379817,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "expon",
+          "n_total": 1126,
+          "sampled": false,
+          "n_test": 1126,
+          "parameters": {
+            "loc": 0.0,
+            "scale": 0.0028034253823397215
+          },
+          "data_type": "continuous",
+          "ks": 0.7751383175045881,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ],
+      "udp_observed_interarrival_seconds": [
+        {
+          "distribution": "norm",
+          "n_total": 109,
+          "sampled": false,
+          "n_test": 109,
+          "parameters": {
+            "loc": 0.018756321810801096,
+            "scale": 0.10956759220716895
+          },
+          "data_type": "continuous",
+          "ks": 0.4343966945491664,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "expon",
+          "n_total": 109,
+          "sampled": false,
+          "n_test": 109,
+          "parameters": {
+            "loc": 0.0,
+            "scale": 0.018756321810801096
+          },
+          "data_type": "continuous",
+          "ks": 0.6257000553620622,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ]
+    },
+    "lapack_wifi_02": {
+      "ip_length_bytes": [
+        {
+          "distribution": "poisson",
+          "n_total": 2645,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "mu": 3214.187
+          },
+          "data_type": "discrete",
+          "ks": 0.5174999906643784,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "geom",
+          "n_total": 2645,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "p": 0.00031112066597245277
+          },
+          "data_type": "discrete",
+          "ks": 0.2777747796441349,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ],
+      "tcp_data_interarrival_seconds": [
+        {
+          "distribution": "norm",
+          "n_total": 1923,
+          "sampled": false,
+          "n_test": 1923,
+          "parameters": {
+            "loc": 0.0012245610922001578,
+            "scale": 0.005996110749301546
+          },
+          "data_type": "continuous",
+          "ks": 0.45153061119418414,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "expon",
+          "n_total": 1923,
+          "sampled": false,
+          "n_test": 1923,
+          "parameters": {
+            "loc": 0.0,
+            "scale": 0.0012245610922001578
+          },
+          "data_type": "continuous",
+          "ks": 0.7716449730011045,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ],
+      "udp_observed_interarrival_seconds": [
+        {
+          "distribution": "norm",
+          "n_total": 52,
+          "sampled": false,
+          "n_test": 52,
+          "parameters": {
+            "loc": 0.06029425217555119,
+            "scale": 0.30424567901820865
+          },
+          "data_type": "continuous",
+          "ks": 0.4214536043781396,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "expon",
+          "n_total": 52,
+          "sampled": false,
+          "n_test": 52,
+          "parameters": {
+            "loc": 0.0,
+            "scale": 0.06029425217555119
+          },
+          "data_type": "continuous",
+          "ks": 0.6113568636279816,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ]
+    },
+    "lapack_wifi_03": {
+      "ip_length_bytes": [
+        {
+          "distribution": "poisson",
+          "n_total": 2008,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "mu": 4159.965
+          },
+          "data_type": "discrete",
+          "ks": 0.6086611096217049,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "geom",
+          "n_total": 2008,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "p": 0.00024038663786834746
+          },
+          "data_type": "discrete",
+          "ks": 0.32034075072108303,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ],
+      "tcp_data_interarrival_seconds": [
+        {
+          "distribution": "norm",
+          "n_total": 1438,
+          "sampled": false,
+          "n_test": 1438,
+          "parameters": {
+            "loc": 0.001138669724922021,
+            "scale": 0.0053166626470497426
+          },
+          "data_type": "continuous",
+          "ks": 0.41520723861792974,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "expon",
+          "n_total": 1438,
+          "sampled": false,
+          "n_test": 1438,
+          "parameters": {
+            "loc": 0.0,
+            "scale": 0.001138669724922021
+          },
+          "data_type": "continuous",
+          "ks": 0.7337717885883619,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ],
+      "udp_observed_interarrival_seconds": [
+        {
+          "distribution": "norm",
+          "n_total": 53,
+          "sampled": false,
+          "n_test": 53,
+          "parameters": {
+            "loc": 0.04295782772999889,
+            "scale": 0.2140903931972189
+          },
+          "data_type": "continuous",
+          "ks": 0.42048505122422986,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "expon",
+          "n_total": 53,
+          "sampled": false,
+          "n_test": 53,
+          "parameters": {
+            "loc": 0.0,
+            "scale": 0.04295782772999889
+          },
+          "data_type": "continuous",
+          "ks": 0.5906061324296574,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ]
+    },
+    "youtube_wifi_01": {
+      "ip_length_bytes": [
+        {
+          "distribution": "poisson",
+          "n_total": 19906,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "mu": 1112.7565
+          },
+          "data_type": "discrete",
+          "ks": 0.8599981547262981,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "geom",
+          "n_total": 19906,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "p": 0.0008986692057067293
+          },
+          "data_type": "discrete",
+          "ks": 0.5407634863212573,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ],
+      "tcp_data_interarrival_seconds": [
+        {
+          "status": "insufficient_or_constant_data",
+          "n": 4
+        }
+      ],
+      "udp_observed_interarrival_seconds": [
+        {
+          "distribution": "norm",
+          "n_total": 19772,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "loc": 0.0021634896993637086,
+            "scale": 0.06598366833804147
+          },
+          "data_type": "continuous",
+          "ks": 0.4869217200135768,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "expon",
+          "n_total": 19772,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "loc": 0.0,
+            "scale": 0.0021634896993637086
+          },
+          "data_type": "continuous",
+          "ks": 0.7574251025560801,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ]
+    },
+    "youtube_wifi_02": {
+      "ip_length_bytes": [
+        {
+          "distribution": "poisson",
+          "n_total": 13612,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "mu": 1033.9415
+          },
+          "data_type": "discrete",
+          "ks": 0.7899999626120936,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "geom",
+          "n_total": 13612,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "p": 0.0009671727075468003
+          },
+          "data_type": "discrete",
+          "ks": 0.49808075526297035,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ],
+      "tcp_data_interarrival_seconds": [
+        {
+          "distribution": "norm",
+          "n_total": 101,
+          "sampled": false,
+          "n_test": 101,
+          "parameters": {
+            "loc": 0.4978321684469091,
+            "scale": 1.9210539016917325
+          },
+          "data_type": "continuous",
+          "ks": 0.44090993550871665,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "expon",
+          "n_total": 101,
+          "sampled": false,
+          "n_test": 101,
+          "parameters": {
+            "loc": 0.0,
+            "scale": 0.4978321684469091
+          },
+          "data_type": "continuous",
+          "ks": 0.7175379203172795,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ],
+      "udp_observed_interarrival_seconds": [
+        {
+          "distribution": "norm",
+          "n_total": 13157,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "loc": 0.006838181257247925,
+            "scale": 0.13271876388111076
+          },
+          "data_type": "continuous",
+          "ks": 0.49391751950808876,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "expon",
+          "n_total": 13157,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "loc": 0.0,
+            "scale": 0.006838181257247925
+          },
+          "data_type": "continuous",
+          "ks": 0.8165751169847646,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ]
+    },
+    "youtube_wifi_03": {
+      "ip_length_bytes": [
+        {
+          "distribution": "poisson",
+          "n_total": 28418,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "mu": 1114.514
+          },
+          "data_type": "discrete",
+          "ks": 0.8604972604702241,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "geom",
+          "n_total": 28418,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "p": 0.0008972520757926774
+          },
+          "data_type": "discrete",
+          "ks": 0.5407615508298226,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ],
+      "tcp_data_interarrival_seconds": [
+        {
+          "distribution": "norm",
+          "n_total": 97,
+          "sampled": false,
+          "n_test": 97,
+          "parameters": {
+            "loc": 0.2827314740603732,
+            "scale": 2.4114093387535815
+          },
+          "data_type": "continuous",
+          "ks": 0.5013052635300372,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "expon",
+          "n_total": 97,
+          "sampled": false,
+          "n_test": 97,
+          "parameters": {
+            "loc": 0.0,
+            "scale": 0.2827314740603732
+          },
+          "data_type": "continuous",
+          "ks": 0.8260248988962665,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ],
+      "udp_observed_interarrival_seconds": [
+        {
+          "distribution": "norm",
+          "n_total": 27987,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "loc": 0.006666909456253051,
+            "scale": 0.1359519431545166
+          },
+          "data_type": "continuous",
+          "ks": 0.49242824712521854,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        },
+        {
+          "distribution": "expon",
+          "n_total": 27987,
+          "sampled": true,
+          "n_test": 2000,
+          "parameters": {
+            "loc": 0.0,
+            "scale": 0.006666909456253051
+          },
+          "data_type": "continuous",
+          "ks": 0.8346456308265007,
+          "p_value": 0.001,
+          "simulations": 999,
+          "assumption": "Comparaison exploratoire sous hypothèse d’indépendance. Une valeur p élevée ne prouve pas la loi. Pour les temps, les zéros, arrondis et dépendances limitent le test continu. Poisson et géométrique sont des références simples, pas des modèles physiques imposés aux tailles IP."
+        }
+      ]
+    }
+  },
+  "jitter": {
+    "status": "not_computed",
+    "reason": "Aucun CSV RTP validé dans data/rtp.csv."
+  }
+}

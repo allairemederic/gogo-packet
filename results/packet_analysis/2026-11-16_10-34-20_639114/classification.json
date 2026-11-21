@@ -1,0 +1,84 @@
+{
+  "task": "TCP avec ou sans payload",
+  "class_definition": {
+    "0": "TCP sans payload",
+    "1": "TCP avec payload"
+  },
+  "features": [
+    "ip_length"
+  ],
+  "split_method": "Captures entières : _01 train, _02 validation, _03 test",
+  "prediction_threshold": 0.5,
+  "partitions": {
+    "train": {
+      "packets": 1755,
+      "fraction": 0.2502852253280091,
+      "class_counts": {
+        "0": 623,
+        "1": 1132
+      },
+      "captures": [
+        "lapack_wifi_01",
+        "youtube_wifi_01"
+      ]
+    },
+    "validation": {
+      "packets": 2955,
+      "fraction": 0.42142042213348546,
+      "class_counts": {
+        "0": 929,
+        "1": 2026
+      },
+      "captures": [
+        "lapack_wifi_02",
+        "youtube_wifi_02"
+      ]
+    },
+    "test": {
+      "packets": 2302,
+      "fraction": 0.3282943525385054,
+      "class_counts": {
+        "0": 765,
+        "1": 1537
+      },
+      "captures": [
+        "lapack_wifi_03",
+        "youtube_wifi_03"
+      ]
+    }
+  },
+  "status": "completed",
+  "selected_model": "linear",
+  "validation_macro_f1": {
+    "linear": 0.9208339679839266,
+    "ridge": 0.9208339679839266
+  },
+  "test": {
+    "sans_payload": {
+      "precision": 0.819935691318328,
+      "recall": 1.0,
+      "f1-score": 0.901060070671378,
+      "support": 765.0
+    },
+    "avec_payload": {
+      "precision": 1.0,
+      "recall": 0.8906961613532857,
+      "f1-score": 0.9421885753613214,
+      "support": 1537.0
+    },
+    "accuracy": 0.9270199826238054,
+    "macro avg": {
+      "precision": 0.909967845659164,
+      "recall": 0.9453480806766428,
+      "f1-score": 0.9216243230163497,
+      "support": 2302.0
+    },
+    "weighted avg": {
+      "precision": 0.9401610790002264,
+      "recall": 0.9270199826238054,
+      "f1-score": 0.9285207621172699,
+      "support": 2302.0
+    }
+  },
+  "selection_note": "En cas d'égalité sur validation, linear est choisi en premier."
+}
