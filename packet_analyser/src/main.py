@@ -17,9 +17,11 @@ from statistics import (
 )
 
 from plot_creator import (
+    get_bins,
     plot_histogram,
-    plot_comparison,
-    plot_distribution_cdf,
+    plot_cdf,
+    plot_wifi_ethernet,
+    plot_means,
 )
 
 from classification import train_and_evaluate
@@ -37,8 +39,8 @@ def save_json(path, content):
     )
 
 
-def analyze_capture(capture, packets, figures_dir):
-    # Sélectionner les populations à étudier.
+def get_values(packets):
+    # Cette fonction reçoit une seule capture.
     tcp_data = packets.loc[
         packets["protocol"].eq("TCP")
         & packets["payload_length"].gt(0)
@@ -46,7 +48,7 @@ def analyze_capture(capture, packets, figures_dir):
 
     udp = packets.loc[packets["protocol"].eq("UDP")]
 
-    populations = {
+    return {
         "ip_length_bytes": (
             packets["ip_length"].to_numpy(),
             "Taille IP (octets)",
@@ -61,12 +63,27 @@ def analyze_capture(capture, packets, figures_dir):
         ),
     }
 
+
+def analyze_capture(
+    capture,
+    packets,
+    populations,
+    bins,
+    figures_dir,
+):
+    metadata = {
+        "activity": packets["activity"].iloc[0],
+        "connection": packets["connection"].iloc[0],
+        "repetition": int(packets["repetition"].iloc[0]),
+    }
+
     rows = []
     fits = {}
 
     for variable, (values, xlabel) in populations.items():
         rows.append({
             "capture_id": capture,
+            **metadata,
             "variable": variable,
             **compute_moments(values),
         })
@@ -82,9 +99,10 @@ def analyze_capture(capture, packets, figures_dir):
             xlabel,
             figures_dir / f"{capture}_{variable}.pdf",
             fits[variable],
+            bins=bins[variable],
         )
 
-        plot_distribution_cdf(
+        plot_cdf(
             values,
             capture,
             xlabel,
@@ -175,7 +193,7 @@ def main():
         frames.append(frame)
         capture_summary[path.stem] = info
 
-    # Regrouper et nettoyer les paquets.
+    # Nettoyer les paquets et ajouter les métadonnées.
     packets = clean_packets(
         pd.concat(frames, ignore_index=True)
     )
@@ -198,31 +216,106 @@ def main():
         index=False,
     )
 
-    # Analyser chaque capture séparément.
     rows = []
     fits = {}
+    histogram_bins = {}
+    comparisons = {}
 
-    for capture, selected in packets.groupby("capture_id"):
-        print(f"Statistiques : {capture}")
-
-        capture_rows, capture_fits = analyze_capture(
-            capture,
-            selected,
-            figures_dir,
-        )
-
-        rows.extend(capture_rows)
-        fits[capture] = capture_fits
-
-        capture_summary[capture]["protocol_counts"] = {
-            name: int(count)
-            for name, count
-            in selected["protocol"].value_counts().items()
+    # Comparer les captures d'une même activité.
+    for activity, activity_packets in packets.groupby("activity"):
+        groups = {
+            capture: selected
+            for capture, selected
+            in activity_packets.groupby("capture_id")
         }
 
-        capture_summary[capture]["retained_after_cleaning"] = (
-            len(selected)
-        )
+        # Calculer les valeurs séparément pour chaque capture.
+        populations = {
+            capture: get_values(selected)
+            for capture, selected in groups.items()
+        }
+
+        first = next(iter(populations.values()))
+
+        # Une grille commune par activité et par mesure.
+        bins = {
+            variable: get_bins(
+                values[variable][0]
+                for values in populations.values()
+            )
+            for variable in first
+        }
+
+        # Conserver les bornes pour documenter les figures.
+        histogram_bins[activity] = {
+            variable: (
+                edges.tolist()
+                if edges is not None
+                else None
+            )
+            for variable, edges in bins.items()
+        }
+
+        # Statistiques et figures individuelles.
+        for capture, selected in groups.items():
+            print(f"Statistiques : {capture}")
+
+            capture_rows, capture_fits = analyze_capture(
+                capture,
+                selected,
+                populations[capture],
+                bins,
+                figures_dir,
+            )
+
+            rows.extend(capture_rows)
+            fits[capture] = capture_fits
+
+            capture_summary[capture].update({
+                "activity": activity,
+                "connection": selected["connection"].iloc[0],
+                "repetition": int(
+                    selected["repetition"].iloc[0]
+                ),
+                "protocol_counts": {
+                    name: int(count)
+                    for name, count
+                    in selected["protocol"].value_counts().items()
+                },
+                "retained_after_cleaning": len(selected),
+            })
+
+        # Comparaisons Wi-Fi/Ethernet.
+        comparisons[activity] = {}
+
+        for variable, (_, xlabel) in first.items():
+            connections = {
+                "wifi": {},
+                "ethernet": {},
+            }
+
+            for capture, selected in groups.items():
+                connection = selected["connection"].iloc[0]
+
+                connections[connection][capture] = (
+                    populations[capture][variable][0]
+                )
+
+            created = plot_wifi_ethernet(
+                connections,
+                activity,
+                xlabel,
+                figures_dir / (
+                    f"{activity}_wifi_ethernet_{variable}.pdf"
+                ),
+                bins=bins[variable],
+            )
+
+            comparisons[activity][variable] = (
+                "created"
+                if created
+                else "missing_or_empty_connection"
+            )
 
     # Calculer la gigue si un CSV RTP validé est disponible.
     rtp_path = project_dir / "data" / "rtp.csv"
@@ -272,7 +365,7 @@ def main():
     # Comparer les moyennes.
     table = pd.DataFrame(rows)
 
-    plot_comparison(
+    plot_means(
         table,
         figures_dir / "comparison.pdf",
     )
@@ -316,6 +409,8 @@ def main():
             },
             "statistics": records,
             "distribution_fits": fits,
+            "histogram_bins": histogram_bins,
+            "wifi_ethernet_comparisons": comparisons,
             "jitter": jitter_info,
         },
     )
