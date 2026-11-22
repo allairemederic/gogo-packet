@@ -334,14 +334,57 @@ def main():
         rtp_dir.mkdir(parents=True, exist_ok=True)
         rtp_path = rtp_dir / "rtp.csv"
 
-        rtp_packets.to_csv(
-            rtp_path,
-            index=False,
+        rtp_packets.to_csv(rtp_path,index=False)
+
+        # Intervalles d'arrivée des RTP, sans les paquets RTCP.
+        rtp_streams = rtp_packets.groupby(
+            ["capture_id", "stream_id"]
         )
 
-        print(
-            f"Gigue : {len(rtp_packets)} paquets RTP extraits."
-        )
+        for index, ((capture, stream), selected) in enumerate(rtp_streams):
+            # Adapter le nom de colonne à la fonction existante.
+            arrivals = selected.rename(
+                columns={"arrival_time": "timestamp"}
+            )
+
+            intervals = compute_interarrival_times(arrivals)
+
+            metadata = capture_summary[capture]
+            variable = "rtp_data_interarrival_seconds"
+
+            rows.append({
+                "capture_id": capture,
+                "stream_id": stream,
+                "activity": metadata["activity"],
+                "connection": metadata["connection"],
+                "repetition": metadata["repetition"],
+                "variable": variable,
+                **compute_moments(intervals),
+            })
+
+            interval_fits = fit_distributions(intervals)
+
+            # Conserver les ajustements séparément pour chaque flux.
+            fit_name = f"{variable}_stream_{stream}"
+            fits.setdefault(capture, {})[fit_name] = interval_fits
+
+            plot_histogram(
+                intervals,
+                f"{capture} — arrivées RTP",
+                "Intervalle d'arrivée RTP (s)",
+                figures_dir / f"rtp_arrivals_{index}.pdf",
+                interval_fits,
+            )
+
+            plot_cdf(
+                intervals,
+                f"{capture} — arrivées RTP",
+                "Intervalle d'arrivée RTP (s)",
+                figures_dir / f"rtp_arrivals_{index}_cdf.pdf",
+                interval_fits,
+            )
+
+        print(f"Gigue : {len(rtp_packets)} paquets RTP extraits.")
 
         jitter = compute_jitter(rtp_path)
 
@@ -454,6 +497,10 @@ def main():
                     "Extraction limitée aux communications "
                     "configurées ; les autres flux ne sont "
                     "pas automatiquement identifiés."
+                ),
+                "rtp_arrivals": (
+                    "Paquets RTP entrants sélectionnés, RTCP exclu ; "
+                    "intervalles calculés séparément par capture et par flux."
                 ),
             },
             "statistics": records,
