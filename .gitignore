@@ -7,3 +7,6 @@ venv/
 # Python bytecode cache
 __pycache__/
 *.py[cod]
+
+# Results
+/results/

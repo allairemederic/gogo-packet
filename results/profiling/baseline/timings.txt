@@ -1,6 +1,0 @@
-lapack_wifi_01.pcap : 0.443 s, 4099 paquets/s
-lapack_wifi_02.pcap : 0.727 s, 3639 paquets/s
-lapack_wifi_03.pcap : 0.463 s, 4333 paquets/s
-youtube_wifi_01.pcap : 4.127 s, 4824 paquets/s
-youtube_wifi_02.pcap : 2.993 s, 4550 paquets/s
-youtube_wifi_03.pcap : 5.667 s, 5015 paquets/s

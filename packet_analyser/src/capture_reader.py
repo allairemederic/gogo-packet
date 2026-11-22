@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import subprocess
 
-from scapy.all import IP, IPv6, TCP, UDP, PcapReader, IPv6ExtHdrFragment
+from scapy.all import (IP, IPv6, TCP, UDP, PcapReader, IPv6ExtHdrFragment)
 
 COLUMNS = [
     "capture_id",
@@ -19,32 +19,81 @@ COLUMNS = [
     "payload_length",
 ]
 
+RTP_COLUMNS = [
+    "capture_id",
+    "packet_id",
+    "stream_id",
+    "arrival_time",
+    "sequence",
+    "rtp_timestamp",
+    "payload_type",
+    "clock_hz",
+    "clock_source",
+]
 
-def read_capture(path):
+def extract_rtp(data, expected_type):
+
+    if len(data) < 12:
+        return None
+
+    version = data[0] >> 6
+    payload_type = data[1] & 0x7F
+
+    if version != 2 or payload_type != expected_type:
+        return None
+
+    # Vérifier les identifiants CSRC
+    csrc_count = data[0] & 0x0F
+    header_length = 12 + 4 * csrc_count
+
+    if len(data) < header_length:
+        return None
+
+    # Vérifier extension RTP
+    if data[0] & 0x10:
+        if len(data) < header_length + 4:
+            return None
+
+        extension_length = int.from_bytes(data[header_length + 2:header_length + 4], "big",)
+
+        header_length += 4 + 4 * extension_length
+
+        if len(data) < header_length:
+            return None
+
+    return {
+        "sequence": int.from_bytes(data[2:4], "big"),
+        "rtp_timestamp": int.from_bytes(data[4:8], "big"),
+        "ssrc": int.from_bytes(data[8:12], "big"),
+        "payload_type": payload_type,
+    }
+
+
+
+def read_capture(path, rtp_settings=None):
     rows = []
-    audit = Counter()
+    rtp_rows = []
+    summary = Counter()
     capture_id = Path(path).stem
 
     with PcapReader(str(path)) as reader:
         for number, packet in enumerate(reader, start=1):
-            audit["total"] += 1
+            summary["total"] += 1
 
             # Trouver la couche IPv4 ou IPv6
             ip = packet.getlayer(IP) or packet.getlayer(IPv6)
 
             if ip is None:
-                audit["non_ip"] += 1
+                summary["non_ip"] += 1
                 continue
 
             version = int(ip.version)
 
             # Ignorer les fragments
-            fragmented = (version == 4 and (ip.frag or ip.flags.MF)) or (
-                version == 6 and IPv6ExtHdrFragment in ip
-            )
+            fragmented = (version == 4 and (ip.frag or ip.flags.MF)) or (version == 6 and IPv6ExtHdrFragment in ip)
 
             if fragmented:
-                audit["fragmented"] += 1
+                summary["fragmented"] += 1
                 continue
 
             # Calculer la taille totale du paquet IP
@@ -52,15 +101,16 @@ def read_capture(path):
                 length = int(ip.len)
             else:
                 if int(ip.plen) == 0:
-                    audit["ipv6_zero_payload_or_jumbogram"] += 1
+                    summary["ipv6_zero_payload_or_jumbogram"] += 1
                     continue
 
                 length = 40 + int(ip.plen)
 
             # Ignorer les paquets incomplets
             ip_bytes = bytes(ip)
+
             if len(ip_bytes) < length:
-                audit["truncated"] += 1
+                summary["truncated"] += 1
                 continue
 
             transport = ip.payload
@@ -75,7 +125,11 @@ def read_capture(path):
             payload_length = None
 
             if isinstance(transport, (TCP, UDP)):
-                available = length - (len(ip_bytes) - len(bytes(transport)))
+
+                transport_bytes = bytes(transport)
+                ip_headers = len(bytes(ip)) - len(bytes(transport))
+                available = length - ip_headers
+
                 src_port = int(transport.sport)
                 dst_port = int(transport.dport)
 
@@ -83,26 +137,65 @@ def read_capture(path):
                     protocol = "TCP"
 
                     # Retirer les en-têtes IP et TCP
-                    ip_headers = len(bytes(ip)) - len(bytes(transport))
                     tcp_header = 4 * int(transport.dataofs)
+
                     if tcp_header < 20 or tcp_header > available:
-                        audit["invalid_length"] += 1
+                        summary["invalid_length"] += 1
                         continue
 
-                    payload_length = length - ip_headers - tcp_header
+                    payload_length = available - tcp_header
 
                 else:
                     protocol = "UDP"
 
+                    udp_length = int(transport.len)
+
                     # Retirer l'en-tête UDP
-                    if not 8 <= int(transport.len) <= available:
-                        audit["invalid_length"] += 1
+                    if not 8 <= udp_length <= available:
+                        summary["invalid_length"] += 1
                         continue
-                    payload_length = int(transport.len) - 8
+
+                    payload_length = udp_length - 8
 
                 if not 0 <= payload_length <= length:
-                    audit["invalid_length"] += 1
+                    summary["invalid_length"] += 1
                     continue
+
+                # Examiner la config RTL configurée
+                if protocol == "UDP" and rtp_settings is not None:
+                    selected = (
+                        ip.src == rtp_settings["server_ip"]
+                        and src_port == rtp_settings["server_port"]
+                        and ip.dst == rtp_settings["local_ip"]
+                        and dst_port == rtp_settings["local_port"]
+                    )
+
+                    if selected:
+                        data = transport_bytes[8:udp_length]
+
+                        rtp = extract_rtp(data, rtp_settings["payload_type"])
+
+                        if rtp is not None:
+                            stream = (
+                                f"{ip.src}:{src_port}->"
+                                f"{ip.dst}:{dst_port}/"
+                                f"ssrc={rtp['ssrc']}"
+                            )
+
+                            rtp_rows.append({
+                                "capture_id": capture_id,
+                                "packet_id": number,
+                                "stream_id": stream,
+                                "arrival_time": float(packet.time),
+                                "sequence": rtp["sequence"],
+                                "rtp_timestamp": rtp["rtp_timestamp"],
+                                "payload_type": rtp["payload_type"],
+                                "clock_hz": rtp_settings["clock_hz"],
+                                "clock_source": rtp_settings["clock_source"],
+                            })
+
+                            summary["rtp_selected"] += 1
+
 
             rows.append(
                 [
@@ -120,9 +213,12 @@ def read_capture(path):
                 ]
             )
 
-            audit["retained"] += 1
+            summary["retained"] += 1
 
-    return pd.DataFrame(rows, columns=COLUMNS), dict(audit)
+    packets = pd.DataFrame(rows, columns=COLUMNS)
+    rtp_packets = pd.DataFrame(rtp_rows, columns=RTP_COLUMNS)
+
+    return packets, dict(summary), rtp_packets
 
 
 def detect_quic(path):

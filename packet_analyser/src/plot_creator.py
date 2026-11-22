@@ -456,3 +456,55 @@ def plot_test_results(test, output):
     )
 
     plt.close(figure)
+
+
+def plot_jitter(jitter, path):
+    if jitter.empty:
+        return
+
+    data = jitter.copy()
+
+    # Retrouver le type de connexion dans le nom de capture
+    data["connection"] = data["capture_id"].str.extract(r"_(wifi|ethernet)_", expand=False)
+
+    figure, axes = plt.subplots(
+        2,
+        1,
+        figsize=(10, 7),
+        sharex=True,
+        sharey=True,
+    )
+
+    for axis, connection in zip(axes, ["wifi", "ethernet"]):
+        selected = data.loc[data["connection"].eq(connection)]
+
+        for (capture, stream), packets in selected.groupby(["capture_id", "stream_id"]):
+            packets = packets.sort_values("arrival_time", kind="stable")
+
+            # Commencer chaque courbe à zéro seconde
+            elapsed = (packets["arrival_time"] - packets["arrival_time"].iloc[0])
+
+            axis.plot(
+                elapsed,
+                packets["jitter_seconds"] * 1000,
+                linewidth=0.8,
+                label=f"{capture} (n={len(packets)})",
+            )
+
+        axis.set(
+            title="Wi-Fi" if connection == "wifi" else "Ethernet",
+            ylabel="Gigue RTP (ms)",
+        )
+
+        axis.grid(alpha=0.3)
+
+        if not selected.empty:
+            axis.legend(fontsize=8)
+
+    axes[-1].set_xlabel("Temps écoulé depuis la première estimation du flux (s)")
+
+    figure.suptitle("Gigue RTP entrante — horloge supposée à 48 kHz")
+
+    figure.tight_layout()
+    figure.savefig(path)
+    plt.close(figure)
