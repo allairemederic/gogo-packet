@@ -222,19 +222,18 @@ def read_capture(path, rtp_settings=None):
 
 
 def detect_quic(path):
-    """Retourner les numéros des paquets reconnus comme QUIC."""
 
     command = [
         "tshark",
-        "-n",  # Ne pas résoudre les noms réseau.
+        "-n",  # Ne pas résoudre les noms réseau
         "-r",
-        str(path),  # Lire la capture.
+        str(path),  # Lire la capture
         "-Y",
-        "quic",  # Sélectionner les paquets QUIC.
+        "quic",  # Sélectionner les paquets QUIC
         "-T",
         "fields",
         "-e",
-        "frame.number",  # Extraire leur numéro.
+        "frame.number",  # Extraire leur numéro
     ]
 
     result = subprocess.run(

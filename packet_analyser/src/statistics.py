@@ -47,7 +47,7 @@ def compute_moments(values):
 
 
 def compute_interarrival_times(packets):
-    # Calculer les intervalles pour une seule capture à la fois.
+    # Calculer les intervalles pour une seule capture à la fois
     if (
         "capture_id" in packets
         and packets["capture_id"].nunique() > 1
@@ -61,7 +61,7 @@ def compute_interarrival_times(packets):
         kind="stable",
     )
 
-    # Garder les intervalles nuls.
+    # Garder les intervalles nuls
     return selected["timestamp"].diff().dropna().to_numpy()
 
 
@@ -70,21 +70,15 @@ def fit_distributions(values, simulations=999, discrete=False):
     values = values[np.isfinite(values)]
 
     if not isinstance(simulations, int) or simulations < 1:
-        raise ValueError(
-            "Le nombre de simulations doit être un entier positif."
-        )
+        raise ValueError("Le nombre de simulations doit être un entier positif.")
 
     if (values < 0).any():
-        raise ValueError(
-            "Les tailles et les intervalles doivent être positifs ou nuls."
-        )
+        raise ValueError("Les tailles et les intervalles doivent être positifs ou nuls.")
 
     if discrete and (
         (values < 1) | (values != np.floor(values))
     ).any():
-        raise ValueError(
-            "Les tailles IP doivent être des entiers strictement positifs."
-        )
+        raise ValueError("Les tailles IP doivent être des entiers strictement positifs.")
 
     original_count = len(values)
     zero_count = int(np.count_nonzero(values == 0))
@@ -98,7 +92,7 @@ def fit_distributions(values, simulations=999, discrete=False):
         ),
     }
 
-    # Seuil pratique, pas une limite mathématique des ajustements.
+    # Seuil pratique, pas une limite mathématique des ajustements
     if len(values) < 10:
         return [{
             **information,
@@ -120,8 +114,8 @@ def fit_distributions(values, simulations=999, discrete=False):
             ),
         }]
 
-    # Limiter le coût des simulations.
-    # Les moments sont calculés séparément sur toutes les valeurs.
+    # Limiter le coût des simulations
+    # Les moments sont calculés séparément sur toutes les valeurs
     if len(values) > 2000:
         values = np.random.default_rng(42).choice(
             values,
@@ -136,7 +130,7 @@ def fit_distributions(values, simulations=999, discrete=False):
             "n_test": len(values),
         }]
 
-    # Références exploratoires, sans supposer qu'elles conviennent.
+    # Références exploratoires, sans supposer qu'elles conviennent
     names = (
         ["poisson", "geom"]
         if discrete
@@ -156,7 +150,7 @@ def fit_distributions(values, simulations=999, discrete=False):
             )
 
         else:
-            # L'exponentielle commence à zéro seconde.
+            # L'exponentielle commence à zéro seconde
             known = {"loc": 0.0} if name == "expon" else None
 
             result = stats.goodness_of_fit(
@@ -207,7 +201,7 @@ def fit_distributions(values, simulations=999, discrete=False):
 
 
 def discrete_parameters(values, name):
-    # Estimer le paramètre à partir de la moyenne.
+    # Estimer le paramètre à partir de la moyenne
     mean = float(np.mean(values))
 
     if name == "poisson":
@@ -222,7 +216,7 @@ def discrete_parameters(values, name):
 
 
 def discrete_distance(values, distribution, parameters):
-    # Comparer les distributions cumulées avant et après chaque valeur.
+    # Comparer les distributions cumulées avant et après chaque valeur
     points, counts = np.unique(
         values,
         return_counts=True,
@@ -263,8 +257,8 @@ def fit_discrete(values, name, simulations):
     rng = np.random.default_rng(42)
     exceedances = 0
 
-    # Simuler la loi et réestimer son paramètre à chaque essai.
-    # Ne pas utiliser la valeur p du KS continu sur des tailles entières.
+    # Simuler la loi et réestimer son paramètre à chaque essai
+    # Ne pas utiliser la valeur p du KS continu sur des tailles entières
     for _ in range(simulations):
         sample = distribution.rvs(
             **parameters,
@@ -290,8 +284,8 @@ def fit_discrete(values, name, simulations):
     return parameters, observed, float(p_value)
 
 
+# Selon la RFC 3550
 def compute_jitter(path):
-    """Gigue RTP selon la récurrence de la RFC 3550."""
 
     dataframe = pd.read_csv(path)
 
@@ -382,7 +376,7 @@ def compute_jitter(path):
                 + 2**31
             ) % 2**32 - 2**31
 
-            # Convertir l'intervalle d'arrivée en unités RTP.
+            # Convertir l'intervalle d'arrivée en unités RTP
             delta_arrival = (
                 arrivals[index] - arrivals[index - 1]
             ) * rate

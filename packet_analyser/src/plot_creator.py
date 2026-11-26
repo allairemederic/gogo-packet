@@ -27,304 +27,198 @@ def get_bins(groups, count=50):
     return np.histogram_bin_edges(np.concatenate(arrays), bins=count)
 
 
-def plot_histogram(values, title, xlabel, path, fits=None, bins=None):
-    values = np.asarray(values, dtype=float)
-    values = values[np.isfinite(values)]
 
-    if not len(values):
-        return
+def plot_histograms(panels, xlabel, path):
 
-    if bins is None:
-        bins = get_bins([values])
+    columns = 3 if len(panels) == 3 else 2
+    rows = (len(panels) + columns - 1) // columns
 
-    figure, axis = plt.subplots()
+    figure, axes = plt.subplots(rows, columns, figsize=(15, 4.5 * rows), squeeze=False)
 
-    _, edges, _ = axis.hist(values, bins=bins, density=True, edgecolor="black", alpha=0.5)
+    colors = {"Wi-Fi": "tab:blue", "Ethernet": "tab:orange",}
 
-    for fit in fits or []:
-        if "distribution" not in fit:
-            continue
+    for axis, (title, groups) in zip(axes.flat, panels.items()):
+        # Retirer les valeurs non valides
+        groups = {
+            name: np.asarray(values, dtype=float)
+            for name, values in groups.items()
+        }
 
-        distribution = getattr(stats, fit["distribution"])
-        parameters = fit["parameters"]
+        groups = {
+            name: values[np.isfinite(values)]
+            for name, values in groups.items()
+        }
 
-        if fit.get("data_type") == "discrete":
+        available = [
+            values for values in groups.values()
+            if len(values)
+        ]
 
-            # Probabilité théorique dans chaque classe de l'histogramme
-            lower = np.ceil(edges[:-1]) - 1
-            upper = np.ceil(edges[1:]) - 1
-            upper[-1] = np.floor(edges[-1])
+        axis.set_title(title,fontsize=18, pad=12)
 
-            masses = (distribution.cdf(upper, **parameters) - distribution.cdf(lower, **parameters))
-
-            axis.stairs(masses / np.diff(edges), edges, label=fit["distribution"], linewidth=2)
-
-        else:
-            grid = np.linspace(values.min(), values.max(), 500)
-            axis.plot(grid, distribution.pdf(grid, **parameters), label=fit["distribution"])
-
-    axis.set(title=f"{title} — n={len(values)}", xlabel=xlabel, ylabel="Densité")
-
-    if fits and any("distribution" in fit for fit in fits):
-        axis.legend()
-
-    axis.ticklabel_format(axis="y", style="plain", useOffset=False)
-
-    figure.tight_layout()
-    figure.savefig(path)
-
-    plt.close(figure)
-
-
-def plot_cdf(values, title, xlabel, path, fits):
-
-    # Proportion des valeurs inférieures ou égales à x
-    values = np.asarray(values, dtype=float)
-    values = values[np.isfinite(values)]
-
-    if not len(values):
-        return
-
-    points, counts = np.unique(values, return_counts=True)
-
-    figure, axis = plt.subplots()
-
-    axis.step(points, np.cumsum(counts) / len(values), where="post", label="Observée")
-
-    for fit in fits:
-        if "distribution" not in fit:
-            continue
-
-        distribution = getattr(stats, fit["distribution"])
-
-        grid = np.linspace( values.min(), values.max(), 2000)
-
-        if fit.get("data_type") == "discrete":
-            grid = np.unique(np.rint(grid))
-
-        axis.plot(
-            grid,
-            distribution.cdf(grid,**fit["parameters"]),
-            label=(f"{fit['distribution']} " f"(p={fit['p_value']:.3g})"),
-        )
-
-    axis.set(
-        title=title,
-        xlabel=xlabel,
-        ylabel="Probabilité cumulée",
-        ylim=(0, 1.02),
-    )
-
-    axis.legend()
-
-    figure.tight_layout()
-    figure.savefig(path)
-
-    plt.close(figure)
-
-
-def plot_wifi_ethernet(
-    populations,
-    activity,
-    xlabel,
-    path,
-    bins=None,
-):
-    # Format :
-    # {
-    #     "wifi": {"youtube_wifi_01": valeurs, ...},
-    #     "ethernet": {"youtube_ethernet_01": valeurs, ...},
-    # }
-    groups = {}
-
-    for connection in ["wifi", "ethernet"]:
-        groups[connection] = {}
-
-        for capture, values in populations.get(connection, {}).items():
-            values = np.asarray(values, dtype=float)
-            values = values[np.isfinite(values)]
-
-            if len(values):
-                groups[connection][capture] = values
-
-    # Attendre des données pour les deux connexions
-    if not groups["wifi"] or not groups["ethernet"]:
-        return False
-
-    if bins is None:
-        bins = get_bins(
-            values
-            for captures in groups.values()
-            for values in captures.values()
-        )
-
-    figure, axes = plt.subplots(
-        1,
-        2,
-        figsize=(13, 5),
-        sharex=True,
-    )
-
-    colors = {
-        "wifi": "tab:blue",
-        "ethernet": "tab:orange",
-    }
-
-    names = {
-        "wifi": "Wi-Fi",
-        "ethernet": "Ethernet",
-    }
-
-    styles = ["-", "--", ":"]
-
-    # Garder chaque répétition visible
-    for connection, captures in groups.items():
-        for index, (capture, values) in enumerate(
-            sorted(captures.items())
-        ):
-            label = (
-                f"{names[connection]} — {capture} "
-                f"(n={len(values)})"
+        if not available:
+            axis.text(
+                0.5, 0.5,
+                "Aucune donnée",
+                ha="center",
+                va="center",
+                fontsize=16,
+                transform=axis.transAxes,
             )
+            continue
 
-            style = styles[index % len(styles)]
+        # Utiliser les mêmes classes pour les deux connexions
+        bins = np.histogram_bin_edges(
+            np.concatenate(available),
+            bins=40,
+        )
 
-            axes[0].hist(
+        for name, values in groups.items():
+            if not len(values):
+                continue
+
+            axis.hist(
                 values,
                 bins=bins,
                 density=True,
                 histtype="step",
-                color=colors[connection],
-                linestyle=style,
-                linewidth=1.5,
+                linewidth=2,
+                color=colors[name],
+                label=f"{name}\n(n = {len(values):,})".replace(",", " "),
             )
 
-            points, counts = np.unique(
-                values,
-                return_counts=True,
-            )
+        axis.set_xlabel(xlabel, fontsize=17)
+        axis.set_ylabel("Densité", fontsize=17)
 
-            axes[1].step(
-                points,
-                np.cumsum(counts) / len(values),
-                where="post",
-                color=colors[connection],
-                linestyle=style,
-                label=label,
-            )
+        axis.tick_params(axis="both", labelsize=14)
 
-    axes[0].set(
-        title="Histogrammes — classes communes",
-        ylabel="Densité",
-    )
+        axis.locator_params(axis="x", nbins=4)
+        axis.locator_params(axis="y", nbins=8)
 
-    axes[1].set(
-        title="Distributions cumulées",
-        ylabel="Probabilité cumulée",
-        ylim=(0, 1.02),
-    )
 
-    for axis in axes:
-        axis.set_xlabel(xlabel)
-        axis.grid(alpha=0.2)
+        axis.set_axisbelow(True)
+        axis.grid(axis="y", linestyle="--", alpha=0.4)
 
-    axes[1].legend(fontsize=8)
+        axis.set_ylim(bottom=0)
+        axis.margins(y=0.12)
 
-    figure.suptitle(
-        f"{activity} — comparaison Wi-Fi / Ethernet"
-    )
+        axis.legend(fontsize=12, loc="upper right")
 
-    figure.tight_layout()
+        axis.xaxis.get_offset_text().set_fontsize(13)
+        axis.yaxis.get_offset_text().set_fontsize(13)
+
+    # Masquer les panneaux inutilisés
+    for axis in axes.flat[len(panels):]:
+        axis.set_visible(False)
+
+    figure.tight_layout(pad=1.5, w_pad=2)
     figure.savefig(path)
-
-    plt.close(figure)
-
-    return True
-
-
-def plot_means(summary, path):
-    if summary.empty:
-        return
-
-    variables = summary["variable"].unique()
-
-    figure, axes = plt.subplots(
-        len(variables),
-        1,
-        figsize=(9, 3 * len(variables)),
-        squeeze=False,
-    )
-
-    for axis, variable in zip(axes[:, 0], variables):
-        selected = summary.loc[
-            summary["variable"].eq(variable)
-        ]
-
-        axis.bar(
-            selected["capture_id"],
-            selected["mean"],
-        )
-
-        axis.set(
-            title=variable,
-            ylabel="Moyenne",
-        )
-
-        axis.tick_params(
-            axis="x",
-            labelrotation=45,
-        )
-
-    figure.tight_layout()
-    figure.savefig(path)
-
     plt.close(figure)
 
 
 def plot_classification(matrix, classes, scores, output):
-    # Matrice de confusion sur le test.
+    # Présenter les classes sur deux lignes
+    class_names = [
+        name.replace("payload", "charge utile")
+            .replace("charge utile", "charge\nutile")
+        for name in classes
+    ]
+
+    # Matrice de confusion
+    figure, axis = plt.subplots(figsize=(7, 6))
+
     display = ConfusionMatrixDisplay(
-        matrix,
-        display_labels=classes,
+        confusion_matrix=matrix,
+        display_labels=class_names,
     )
 
     display.plot(
-        xticks_rotation=45,
+        ax=axis,
+        xticks_rotation=0,
         colorbar=False,
+        values_format="d",
+        text_kw={"fontsize": 18},
     )
 
-    display.figure_.tight_layout()
-
-    display.figure_.savefig(
-        output / "confusion_matrix.pdf"
+    axis.set_xlabel(
+        "Classe prédite",
+        fontsize=17,
+        labelpad=12,
     )
 
-    plt.close(display.figure_)
-
-    # Comparer les modèles et la référence sur validation.
-    figure, axis = plt.subplots()
-
-    axis.bar(
-        list(scores),
-        list(scores.values()),
+    axis.set_ylabel(
+        "Classe réelle",
+        fontsize=17,
+        labelpad=12,
     )
 
     axis.tick_params(
-        axis="x",
-        labelrotation=35,
-    )
-
-    axis.set(
-        ylabel="F1 macro de validation",
-        ylim=(0, 1),
+        axis="both",
+        labelsize=15,
+        labelrotation=0,
     )
 
     figure.tight_layout()
+    figure.savefig(output / "confusion_matrix.pdf")
+    plt.close(figure)
 
-    figure.savefig(
-        output / "model_comparison.pdf"
+    # Comparaison des modèles sur la validation
+    figure, axis = plt.subplots(figsize=(12, 6))
+
+    colors = [
+        "tab:blue",
+        "tab:orange",
+        "tab:green",
+        "tab:purple",
+        "tab:gray",
+    ]
+
+    bars = axis.bar(
+        list(scores),
+        list(scores.values()),
+        color=colors[:len(scores)],
+        width=0.65,
     )
 
+    axis.set_ylabel(
+        "F1 macro de validation",
+        fontsize=18,
+    )
+
+    axis.set_ylim(0, 1)
+    axis.set_yticks(np.arange(0, 1.01, 0.1))
+
+    axis.tick_params(
+        axis="x",
+        labelsize=14,
+        labelrotation=0,
+        pad=10,
+    )
+
+    axis.tick_params(
+        axis="y",
+        labelsize=15,
+    )
+
+    axis.set_axisbelow(True)
+    axis.grid(
+        axis="y",
+        linestyle="--",
+        alpha=0.4,
+    )
+
+    axis.bar_label(
+        bars,
+        labels=[
+            f"{score:.3f}".replace(".", ",")
+            for score in scores.values()
+        ],
+        padding=6,
+        fontsize=15,
+    )
+
+    figure.tight_layout()
+    figure.savefig(output / "model_comparison.pdf")
     plt.close(figure)
 
 
@@ -333,7 +227,7 @@ def plot_tcp_sizes(
     path,
     title="Tailles IP par classe TCP",
 ):
-    # Utiliser l'entraînement pour explorer les caractéristiques.
+    # Utiliser l'entraînement pour explorer les caractéristiques
     groups = []
     labels = []
 
@@ -366,7 +260,7 @@ def plot_tcp_sizes(
         figsize=(11, 4.5),
     )
 
-    # Histogrammes avec les mêmes bornes.
+    # Histogrammes avec les mêmes bornes
     for values, name in zip(groups, labels):
         axes[0].hist(
             values,
@@ -385,7 +279,7 @@ def plot_tcp_sizes(
 
     axes[0].legend(fontsize=8)
 
-    # Médiane, quartiles et points au-delà des moustaches.
+    # Médiane, quartiles et points au-delà des moustaches
     positions = np.arange(1, len(groups) + 1)
 
     axes[1].boxplot(
@@ -414,40 +308,103 @@ def plot_tcp_sizes(
 
 
 def plot_test_results(test, output):
-    # Décrire le test après évaluation.
+
+    # Comparer les tailles des deux classes sur le test
     plot_tcp_sizes(
         test,
         output / "tcp_sizes_by_class.pdf",
         "Test — tailles IP par classe TCP",
     )
 
-    # Les scores de régression ne sont pas des probabilités.
-    figure, axis = plt.subplots()
-
-    correct = test["correct"].to_numpy()
-
-    axis.scatter(
-        test["ip_length"],
-        test["prediction_score"],
-        c=np.where(correct, "tab:blue", "tab:red"),
-        s=8,
-        alpha=0.4,
+    # Présenter les scores avec deux niveaux de détail
+    figure, axes = plt.subplots(
+        1,
+        2,
+        figsize=(12, 4.5),
     )
 
-    axis.axhline(
-        0.5,
-        color="black",
-        linestyle="--",
-        label="Seuil de décision",
-    )
+    for axis, title in zip(
+        axes,
+        ["Vue complète", "Petits paquets"],
+    ):
+        # Tracer les erreurs en dernier pour les rendre visibles
+        for correct, color, marker, name in [
+            (True, "tab:blue", "o", "Correct"),
+            (False, "tab:red", "x", "Erreur"),
+        ]:
+            selected = test.loc[
+                test["correct"].eq(correct)
+            ]
 
-    axis.set(
-        xlabel="Taille IP (octets)",
-        ylabel="Score de régression",
-        title="Test : bleu = correct, rouge = erreur",
-    )
+            axis.scatter(
+                selected["ip_length"],
+                selected["prediction_score"],
+                color=color,
+                marker=marker,
+                s=35,
+                alpha=0.7,
+                label=name,
+            )
 
-    axis.legend()
+        axis.axhline(
+            0.5,
+            color="black",
+            linestyle="--",
+            linewidth=1.5,
+            label="Seuil de décision",
+        )
+
+        axis.set_title(title, fontsize=16)
+        axis.set_xlabel("Taille IP (octets)", fontsize=15)
+        axis.set_ylabel("Score de régression", fontsize=15)
+
+        axis.tick_params(
+            axis="both",
+            labelsize=12,
+        )
+
+        axis.set_axisbelow(True)
+        axis.grid(
+            linestyle="--",
+            alpha=0.3,
+        )
+
+    # Agrandir la zone des petits paquets
+    axes[1].set_xlim(40, 150)
+
+    small_packets = test.loc[
+        test["ip_length"].between(40, 150)
+    ]
+
+    if not small_packets.empty:
+        # Garder visibles les scores et le seuil de décision
+        low = min(
+            float(small_packets["prediction_score"].min()),
+            0.5,
+        )
+
+        high = max(
+            float(small_packets["prediction_score"].max()),
+            0.5,
+        )
+
+        margin = max(
+            (high - low) * 0.2,
+            0.001,
+        )
+
+        axes[1].set_ylim(
+            low - margin,
+            high + margin,
+        )
+
+        axes[1].ticklabel_format(
+            axis="y",
+            style="plain",
+            useOffset=False,
+        )
+
+    axes[0].legend(fontsize=11)
 
     figure.tight_layout()
 
@@ -455,56 +412,4 @@ def plot_test_results(test, output):
         output / "test_prediction_scores.pdf"
     )
 
-    plt.close(figure)
-
-
-def plot_jitter(jitter, path):
-    if jitter.empty:
-        return
-
-    data = jitter.copy()
-
-    # Retrouver le type de connexion dans le nom de capture
-    data["connection"] = data["capture_id"].str.extract(r"_(wifi|ethernet)_", expand=False)
-
-    figure, axes = plt.subplots(
-        2,
-        1,
-        figsize=(10, 7),
-        sharex=True,
-        sharey=True,
-    )
-
-    for axis, connection in zip(axes, ["wifi", "ethernet"]):
-        selected = data.loc[data["connection"].eq(connection)]
-
-        for (capture, stream), packets in selected.groupby(["capture_id", "stream_id"]):
-            packets = packets.sort_values("arrival_time", kind="stable")
-
-            # Commencer chaque courbe à zéro seconde
-            elapsed = (packets["arrival_time"] - packets["arrival_time"].iloc[0])
-
-            axis.plot(
-                elapsed,
-                packets["jitter_seconds"] * 1000,
-                linewidth=0.8,
-                label=f"{capture} (n={len(packets)})",
-            )
-
-        axis.set(
-            title="Wi-Fi" if connection == "wifi" else "Ethernet",
-            ylabel="Gigue RTP (ms)",
-        )
-
-        axis.grid(alpha=0.3)
-
-        if not selected.empty:
-            axis.legend(fontsize=8)
-
-    axes[-1].set_xlabel("Temps écoulé depuis la première estimation du flux (s)")
-
-    figure.suptitle("Gigue RTP entrante — horloge supposée à 48 kHz")
-
-    figure.tight_layout()
-    figure.savefig(path)
     plt.close(figure)

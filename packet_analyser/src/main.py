@@ -8,29 +8,19 @@ import pandas as pd
 
 from capture_reader import read_capture, detect_quic
 from packet_cleaner import clean_packets, prepare_classification_data
-
 from statistics import (
     compute_moments,
     compute_interarrival_times,
     fit_distributions,
     compute_jitter,
 )
-
-from plot_creator import (
-    get_bins,
-    plot_histogram,
-    plot_cdf,
-    plot_wifi_ethernet,
-    plot_means,
-    plot_jitter,
-)
-
+from plot_creator import plot_histograms
 from classification import train_and_evaluate
-
 from rtp_settings import RTP_SETTINGS
 
 
 def save_json(path, content):
+    # Enregistrer un fichier JSON
     path.write_text(
         json.dumps(
             content,
@@ -44,77 +34,119 @@ def save_json(path, content):
 
 def get_values(packets):
 
-    # Une seule capture à la fois
     tcp_data = packets.loc[packets["protocol"].eq("TCP") & packets["payload_length"].gt(0)]
     udp = packets.loc[packets["protocol"].eq("UDP")]
 
     return {
-        "ip_length_bytes": (
-            packets["ip_length"].to_numpy(),
-            "Taille IP (octets)",
-        ),
-        "tcp_data_interarrival_seconds": (
-            compute_interarrival_times(tcp_data),
-            "Intervalle TCP avec payload (s)",
-        ),
-        "udp_observed_interarrival_seconds": (
-            compute_interarrival_times(udp),
-            "Intervalle UDP observé, contrôle compris (s)",
-        ),
+        "ip_length_bytes": packets["ip_length"].to_numpy(),
+        "tcp_data_interarrival_seconds": (compute_interarrival_times(tcp_data)),
+        "udp_observed_interarrival_seconds": (compute_interarrival_times(udp)),
     }
 
+# Calculer les statistiques séparément pour chaque capture
+def analyze_capture(capture, packets):
+    
+    rows = []
+    fits = {}
 
-def analyze_capture(
-    capture,
-    packets,
-    populations,
-    bins,
-    figures_dir,
-):
     metadata = {
+        "capture_id": capture,
         "activity": packets["activity"].iloc[0],
         "connection": packets["connection"].iloc[0],
         "repetition": int(packets["repetition"].iloc[0]),
     }
 
-    rows = []
-    fits = {}
-
-    for variable, (values, xlabel) in populations.items():
+    for variable, values in get_values(packets).items():
         rows.append({
-            "capture_id": capture,
             **metadata,
             "variable": variable,
             **compute_moments(values),
         })
 
-        fits[variable] = fit_distributions(
-            values,
-            discrete=(variable == "ip_length_bytes"),
-        )
-
-        plot_histogram(
-            values,
-            capture,
-            xlabel,
-            figures_dir / f"{capture}_{variable}.pdf",
-            fits[variable],
-            bins=bins[variable],
-        )
-
-        plot_cdf(
-            values,
-            capture,
-            xlabel,
-            figures_dir / f"{capture}_{variable}_cdf.pdf",
-            fits[variable],
-        )
+        fits[variable] = fit_distributions(values, discrete=(variable == "ip_length_bytes"))
 
     return rows, fits
 
 
+def plot_report_figures(packets, rtp_packets, jitter, figures_dir):
+    
+    connections = {"Wi-Fi": "wifi", "Ethernet": "ethernet"}
+    activities = {"YouTube": "youtube", "LAPACK": "lapack", "Zoom": "zoom"}
+
+    # Figure 1 : tailles IP, avec un panneau par activité
+    sizes = {}
+
+    for title, activity in activities.items():
+        sizes[title] = {}
+
+        for name, connection in connections.items():
+            selected = packets.loc[packets["activity"].eq(activity) & packets["connection"].eq(connection)]
+
+            sizes[title][name] = (selected["ip_length"].to_numpy())
+
+    plot_histograms(sizes, "Taille IP (octets)", figures_dir / "ip_sizes.pdf")
+
+    # Figure 2 : intervalles TCP et RTP
+    arrivals = {}
+
+    for title, activity in activities.items():
+        panel = f"{title} — TCP avec charge utile"
+        arrivals[panel] = {}
+
+        for name, connection in connections.items():
+            selected = packets.loc[
+                packets["activity"].eq(activity)
+                & packets["connection"].eq(connection)
+                & packets["protocol"].eq("TCP")
+                & packets["payload_length"].gt(0)
+            ]
+
+            intervals = []
+
+            # Ne pas créer d'intervalle entre deux captures
+            for _, capture in selected.groupby("capture_id"):
+                intervals.extend(compute_interarrival_times(capture) * 1000)
+
+            arrivals[panel][name] = intervals
+
+    if not rtp_packets.empty:
+        arrivals["Zoom — RTP entrant"] = {}
+
+        for name, connection in connections.items():
+            selected = rtp_packets.loc[rtp_packets["capture_id"].str.contains(f"_{connection}_", regex=False)]
+
+            intervals = []
+
+            # Ne pas mélanger les intervalles de plusieurs flux
+            for _, stream in selected.groupby(["capture_id", "stream_id"]):
+                stream = stream.rename(columns={"arrival_time": "timestamp"})
+
+                intervals.extend(compute_interarrival_times(stream) * 1000)
+
+            arrivals["Zoom — RTP entrant"][name] = intervals
+
+    plot_histograms(arrivals,"Intervalle d'arrivée (ms)", figures_dir / "packet_arrivals.pdf")
+
+    # Figure 3 : gigue RTP, avec un panneau par répétition
+    if not jitter.empty:
+        jitter_panels = {}
+
+        for repetition in [1, 2, 3]:
+            title = f"Répétition {repetition:02d}"
+            jitter_panels[title] = {}
+
+            for name, connection in connections.items():
+
+                capture = (f"zoom_{connection}_{repetition:02d}")
+                selected = jitter.loc[jitter["capture_id"].eq(capture)]
+                jitter_panels[title][name] = (selected["jitter_seconds"].to_numpy() * 1000)
+
+        plot_histograms(jitter_panels, "Gigue RTP (ms)", figures_dir / "rtp_jitter.pdf")
+
+
 def main():
 
+    # Dossiers du projet
     project_dir = Path(__file__).resolve().parents[2]
     pcap_dir = project_dir / "data" / "pcap"
     rtp_dir = project_dir / "data" / "rtp"
@@ -122,6 +154,7 @@ def main():
     if not pcap_dir.is_dir():
         raise FileNotFoundError(f"Dossier introuvable : {pcap_dir}")
 
+    # Trouver les captures
     captures = sorted(
         path
         for path in pcap_dir.iterdir()
@@ -135,7 +168,7 @@ def main():
     if len({path.stem for path in captures}) != len(captures):
         raise ValueError("Les captures doivent avoir des noms distincts.")
 
-    # Créer le dossier des résultats
+    # Créer le dossier de cette exécution
     date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f")
 
     output = (
@@ -154,11 +187,10 @@ def main():
 
     tshark_available = shutil.which("tshark") is not None
 
-    # Lire les captures et extraire le RTP
+    # Lire les captures et extraire les informations RTP
     for path in captures:
         print(f"Lecture : {path.name}")
 
-        # Paramètres RTP
         settings = RTP_SETTINGS.get(path.stem)
 
         frame, counts, rtp_frame = read_capture(path, rtp_settings=settings)
@@ -195,13 +227,19 @@ def main():
 
         else:
             frame["is_quic"] = pd.NA
-            info["quic"] = {"status": "not_checked", "reason": "TShark non installé.",}
+
+            info["quic"] = {
+                "status": "not_checked",
+                "reason": "TShark non installé.",
+            }
 
         frames.append(frame)
         capture_summary[path.stem] = info
 
     # Nettoyer les paquets et ajouter les métadonnées
-    packets = clean_packets(pd.concat(frames, ignore_index=True))
+    packets = clean_packets(
+        pd.concat(frames, ignore_index=True)
+    )
 
     if packets.empty:
         save_json(
@@ -218,105 +256,34 @@ def main():
 
     rows = []
     fits = {}
-    histogram_bins = {}
-    comparisons = {}
 
-    # Comparer les captures d'une même activité
-    for activity, activity_packets in packets.groupby("activity"):
-        groups = {
-            capture: selected
-            for capture, selected
-            in activity_packets.groupby("capture_id")
-        }
+    # Statistiques IP, TCP et UDP par captur
+    for capture, selected in packets.groupby("capture_id"):
+        print(f"Statistiques : {capture}")
 
-        # Calculer les valeurs séparément pour chaque capture
-        populations = {
-            capture: get_values(selected)
-            for capture, selected in groups.items()
-        }
+        capture_rows, capture_fits = analyze_capture(capture, selected,)
 
-        first = next(iter(populations.values()))
+        rows.extend(capture_rows)
+        fits[capture] = capture_fits
 
-        # Utiliser des classes communes pour les histogrammes
-        bins = {
-            variable: get_bins(
-                values[variable][0]
-                for values in populations.values()
-            )
-            for variable in first
-        }
+        capture_summary[capture].update({
+            "activity": selected["activity"].iloc[0],
+            "connection": selected["connection"].iloc[0],
+            "repetition": int(
+                selected["repetition"].iloc[0]
+            ),
+            "protocol_counts": {
+                name: int(count)
+                for name, count
+                in selected["protocol"].value_counts().items()
+            },
+            "retained_after_cleaning": len(selected),
+        })
 
-        histogram_bins[activity] = {
-            variable: (
-                edges.tolist()
-                if edges is not None
-                else None
-            )
-            for variable, edges in bins.items()
-        }
+    # Initialiser les données RTP et de gigue
+    rtp_packets = pd.DataFrame()
+    jitter = pd.DataFrame()
 
-        # Statistiques et figures individuelles
-        for capture, selected in groups.items():
-            print(f"Statistiques : {capture}")
-
-            capture_rows, capture_fits = analyze_capture(
-                capture,
-                selected,
-                populations[capture],
-                bins,
-                figures_dir,
-            )
-
-            rows.extend(capture_rows)
-            fits[capture] = capture_fits
-
-            capture_summary[capture].update({
-                "activity": activity,
-                "connection": selected["connection"].iloc[0],
-                "repetition": int(
-                    selected["repetition"].iloc[0]
-                ),
-                "protocol_counts": {
-                    name: int(count)
-                    for name, count
-                    in selected["protocol"].value_counts().items()
-                },
-                "retained_after_cleaning": len(selected),
-            })
-
-        # Comparaisons Wi-Fi/Ethernet
-        comparisons[activity] = {}
-
-        for variable, (_, xlabel) in first.items():
-            connections = {
-                "wifi": {},
-                "ethernet": {},
-            }
-
-            for capture, selected in groups.items():
-                connection = selected["connection"].iloc[0]
-
-                connections[connection][capture] = (
-                    populations[capture][variable][0]
-                )
-
-            created = plot_wifi_ethernet(
-                connections,
-                activity,
-                xlabel,
-                figures_dir / (
-                    f"{activity}_wifi_ethernet_{variable}.pdf"
-                ),
-                bins=bins[variable],
-            )
-
-            comparisons[activity][variable] = (
-                "created"
-                if created
-                else "missing_or_empty_connection"
-            )
-
-    # Calculer la gigue avec le RTP extrait pendant cette exécution
     jitter_info = {
         "status": "not_computed",
         "reason": (
@@ -325,24 +292,16 @@ def main():
     }
 
     if rtp_frames:
-        rtp_packets = pd.concat(
-            rtp_frames,
-            ignore_index=True,
-        )
+        rtp_packets = pd.concat(rtp_frames, ignore_index=True)
 
-        # Enregistrer les données RTP dans data/rtp/.
+        # Enregistrer uniquement le RTP de cette exécution
         rtp_dir.mkdir(parents=True, exist_ok=True)
         rtp_path = rtp_dir / "rtp.csv"
 
-        rtp_packets.to_csv(rtp_path,index=False)
+        rtp_packets.to_csv(rtp_path, index=False)
 
-        # Intervalles d'arrivée des RTP, sans les paquets RTCP.
-        rtp_streams = rtp_packets.groupby(
-            ["capture_id", "stream_id"]
-        )
-
-        for index, ((capture, stream), selected) in enumerate(rtp_streams):
-            # Adapter le nom de colonne à la fonction existante.
+        # Arrivées RTP, séparées par capture et par flux
+        for (capture, stream), selected in rtp_packets.groupby(["capture_id", "stream_id"]):
             arrivals = selected.rename(
                 columns={"arrival_time": "timestamp"}
             )
@@ -362,33 +321,14 @@ def main():
                 **compute_moments(intervals),
             })
 
-            interval_fits = fit_distributions(intervals)
-
-            # Conserver les ajustements séparément pour chaque flux.
             fit_name = f"{variable}_stream_{stream}"
-            fits.setdefault(capture, {})[fit_name] = interval_fits
 
-            plot_histogram(
-                intervals,
-                f"{capture} — arrivées RTP",
-                "Intervalle d'arrivée RTP (s)",
-                figures_dir / f"rtp_arrivals_{index}.pdf",
-                interval_fits,
-            )
+            fits.setdefault(capture, {})[fit_name] = (fit_distributions(intervals))
 
-            plot_cdf(
-                intervals,
-                f"{capture} — arrivées RTP",
-                "Intervalle d'arrivée RTP (s)",
-                figures_dir / f"rtp_arrivals_{index}_cdf.pdf",
-                interval_fits,
-            )
-
-        print(f"Gigue : {len(rtp_packets)} paquets RTP extraits.")
+        # Calculer la gigue RTP
+        print( f"Gigue : {len(rtp_packets)} paquets RTP extraits.")
 
         jitter = compute_jitter(rtp_path)
-
-        plot_jitter(jitter, figures_dir / "zoom_jitter_time.pdf",)
 
         jitter_info = {
             "status": (
@@ -406,23 +346,22 @@ def main():
             ),
             "clock_note": (
                 "Horloge supposée à 48 000 Hz, compatible avec "
-                "les horodatages observés ; codec non confirmé."
+                "les horodatages observés. Codec non confirmé."
             ),
         }
 
-        streams = jitter.groupby(
+        # Statistiques de gigue par capture et par flux
+        for (capture, stream), selected in jitter.groupby(
             ["capture_id", "stream_id"]
-        )
-
-        for index, ((capture, stream), selected) in enumerate(streams):
+        ):
             values = selected["jitter_seconds"].to_numpy()
-            variable = f"rtp_jitter_seconds_stream_{stream}"
 
-            # Ajouter les métadonnées de la capture
             metadata = capture_summary[capture]
+            variable = f"rtp_jitter_seconds_stream_{stream}"
 
             rows.append({
                 "capture_id": capture,
+                "stream_id": stream,
                 "activity": metadata["activity"],
                 "connection": metadata["connection"],
                 "repetition": metadata["repetition"],
@@ -430,34 +369,18 @@ def main():
                 **compute_moments(values),
             })
 
-            jitter_fits = fit_distributions(values)
-            fits.setdefault(capture, {})[variable] = jitter_fits
-
-            plot_histogram(
-                values,
-                f"{capture} — gigue RTP entrante",
-                "Gigue RTP (s)",
-                figures_dir / f"jitter_{index}.pdf",
-                jitter_fits,
+            fits.setdefault(capture, {})[variable] = (
+                fit_distributions(values)
             )
 
-            plot_cdf(
-                values,
-                f"{capture} — gigue RTP entrante",
-                "Gigue RTP (s)",
-                figures_dir / f"jitter_{index}_cdf.pdf",
-                jitter_fits,
-            )
+    # Créer les figures statistiques regroupées
+    print("Création des figures statistiques...")
 
-    # Comparer les moyennes
+    plot_report_figures(packets, rtp_packets, jitter, figures_dir)
+
+    # Remplacer les valeurs manquantes par null dans le JSON
     table = pd.DataFrame(rows)
 
-    plot_means(
-        table,
-        figures_dir / "comparison.pdf",
-    )
-
-    # Convertir les valeurs manquantes en null pour le JSON
     records = (
         table.astype(object)
         .where(table.notna(), None)
@@ -475,48 +398,51 @@ def main():
                     "offloading inchangé."
                 ),
                 "tcp_arrivals": (
-                    "TCP avec payload, deux directions "
-                    "confondues, par capture."
+                    "TCP avec charge utile, toutes connexions "
+                    "et deux directions regroupées par capture."
                 ),
                 "udp_arrivals": (
                     "Tous les UDP observés, "
                     "données et contrôle non séparés."
                 ),
                 "udp_classification": (
-                    "Non effectuée : aucune étiquette "
+                    "Non effectuée. Aucune étiquette "
                     "fiable données/contrôle."
                 ),
                 "application_filter": (
-                    "Aucun : le trafic de fond peut être présent."
+                    "Aucun. Le trafic de fond peut être présent."
                 ),
                 "quic": (
-                    "Reconnaissance par TShark seulement ; "
-                    "aucune étiquette données/contrôle QUIC."
+                    "Reconnaissance par TShark seulement. "
+                    "Aucune étiquette données/contrôle QUIC."
                 ),
                 "rtp": (
-                    "Extraction limitée aux communications "
-                    "configurées ; les autres flux ne sont "
-                    "pas automatiquement identifiés."
+                    "Extraction limitée aux communications configurées."
                 ),
                 "rtp_arrivals": (
-                    "Paquets RTP entrants sélectionnés, RTCP exclu ; "
-                    "intervalles calculés séparément par capture et par flux."
+                    "RTP entrant sélectionné, RTCP exclu. "
+                    "Intervalles calculés par capture et par flux."
+                ),
+                "figures": (
+                    "Les répétitions sont regroupées pour les "
+                    "histogrammes IP et d'arrivées seulement. "
+                    "Les statistiques restent séparées par capture. "
+                    "Chaque panneau utilise des classes communes "
+                    "pour Wi-Fi et Ethernet."
                 ),
             },
             "statistics": records,
             "distribution_fits": fits,
-            "histogram_bins": histogram_bins,
-            "wifi_ethernet_comparisons": comparisons,
             "jitter": jitter_info,
         },
     )
 
-    # Classification TCP
-    print("Classification TCP avec/sans payload...")
+    # Classification TCP et figures ML
+    print("Classification TCP avec/sans charge utile...")
 
     classification_data = prepare_classification_data(packets)
 
-    report = train_and_evaluate(classification_data,output,)
+    report = train_and_evaluate(classification_data, output)
 
     if report["status"] != "completed":
         print(report["reason"])

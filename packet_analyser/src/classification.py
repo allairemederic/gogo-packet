@@ -16,21 +16,17 @@ from plot_creator import (
 )
 
 def split_dataset(data):
-    # Chaque capture reste entière dans un seul ensemble.
+    # Chaque capture reste entière dans un seul ensemble
     suffixes = {
         "train": "_01",
         "validation": "_02",
         "test": "_03",
     }
 
-    valid_names = data["capture_id"].str.endswith(
-        tuple(suffixes.values())
-    )
+    valid_names = data["capture_id"].str.endswith(tuple(suffixes.values()))
 
     if not valid_names.all():
-        names = sorted(
-            data.loc[~valid_names, "capture_id"].unique()
-        )
+        names = sorted(data.loc[~valid_names, "capture_id"].unique())
 
         raise ValueError(
             "Les captures doivent finir par _01, _02 ou _03 : "
@@ -38,15 +34,13 @@ def split_dataset(data):
         )
 
     return {
-        name: data.loc[
-            data["capture_id"].str.endswith(suffix)
-        ].copy()
+        name: data.loc[data["capture_id"].str.endswith(suffix)].copy()
         for name, suffix in suffixes.items()
     }
 
 
 def train_and_evaluate(data, output):
-    # Le payload définit la classe, mais ne sert pas d'entrée.
+    # Le payload définit la classe, mais ne sert pas d'entrée
     report = {
         "task": "TCP avec ou sans payload",
         "class_definition": {
@@ -73,7 +67,7 @@ def train_and_evaluate(data, output):
     partitions = split_dataset(data)
     report["partitions"] = {}
 
-    # Décrire les ensembles.
+    # Décrire les ensembles
     for name, part in partitions.items():
         report["partitions"][name] = {
             "packets": len(part),
@@ -89,7 +83,7 @@ def train_and_evaluate(data, output):
             ),
         }
 
-    # Vérifier la présence des deux classes.
+    # Vérifier la présence des deux classes
     invalid = [
         name
         for name, part in partitions.items()
@@ -113,10 +107,8 @@ def train_and_evaluate(data, output):
         validation = partitions["validation"]
         test = partitions["test"]
 
-        # Comparer deux jeux de caractéristiques.
-        feature_sets = {
-            "length": ["ip_length"],
-        }
+        # Comparer deux jeux de caractéristiques
+        feature_sets = {"length": ["ip_length"]}
 
         if "ip_version" in data.columns:
             feature_sets["length_ip_version"] = [
@@ -136,7 +128,7 @@ def train_and_evaluate(data, output):
             for name, estimator in estimators:
                 key = f"{name}_{feature_name}"
 
-                # La normalisation est apprise sur train seulement.
+                # La normalisation est apprise sur train seulement
                 model = make_pipeline(
                     StandardScaler(),
                     estimator,
@@ -163,11 +155,11 @@ def train_and_evaluate(data, output):
 
                 models[key] = (model, columns)
 
-        # Choisir le modèle avec la validation seulement.
+        # Choisir le modèle avec la validation seulement
         best_name = max(scores, key=scores.get)
         best_model, features = models[best_name]
 
-        # Évaluer le modèle choisi sur le test.
+        # Évaluer le modèle choisi sur le test
         prediction_scores = best_model.predict(test[features])
         predictions = (prediction_scores >= 0.5).astype(int)
 
@@ -199,7 +191,7 @@ def train_and_evaluate(data, output):
             "Entraînement — tailles IP par classe TCP",
         )
 
-        # Référence simple : toujours prédire la classe majoritaire du train.
+        # Référence simple : toujours prédire la classe majoritaire du train
         majority = int(train["label"].mode().iloc[0])
 
         baseline_validation = [majority] * len(validation)
@@ -228,7 +220,7 @@ def train_and_evaluate(data, output):
             ),
         }
 
-        # Conserver les prédictions pour examiner les erreurs.
+        # Conserver les prédictions pour examiner les erreurs
         evaluated = test.copy()
 
         evaluated["prediction"] = predictions
@@ -237,7 +229,7 @@ def train_and_evaluate(data, output):
             evaluated["prediction"]
         )
 
-        # Résultats séparés pour chaque capture du test.
+        # Résultats séparés pour chaque capture du test
         report["test_by_capture"] = {}
 
         for capture, selected in evaluated.groupby("capture_id"):
@@ -259,7 +251,7 @@ def train_and_evaluate(data, output):
                 ),
             }
 
-        # Résumer les erreurs du test.
+        # Résumer les erreurs du test
         errors = evaluated.loc[~evaluated["correct"]]
 
         report["errors"] = {
@@ -287,17 +279,26 @@ def train_and_evaluate(data, output):
             ),
         }
 
-        # Figures des tailles et des erreurs.
+        # Figures des tailles et des erreurs
         plot_test_results(
             evaluated,
             figures_dir,
         )
 
-        # Ajouter la référence majoritaire à la comparaison.
-        plotted_scores = {
-            **scores,
-            "majority_baseline": baseline_f1,
+        
+        model_names = {
+            "linear_length": "Linéaire\nTaille IP",
+            "ridge_length": "Ridge\nTaille IP",
+            "linear_length_ip_version": "Linéaire\nTaille et version IP",
+            "ridge_length_ip_version": "Ridge\nTaille et version IP",
         }
+
+        plotted_scores = {
+            model_names[name]: score
+            for name, score in scores.items()
+        }
+
+        plotted_scores["Référence\nmajoritaire"] = baseline_f1
 
         matrix = confusion_matrix(
             test["label"],
@@ -307,7 +308,7 @@ def train_and_evaluate(data, output):
 
         plot_classification(
             matrix,
-            ["Sans payload", "Avec payload"],
+            ["Sans charge utile", "Avec charge utile"],
             plotted_scores,
             figures_dir,
         )
